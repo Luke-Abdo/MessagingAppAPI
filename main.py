@@ -8,7 +8,14 @@ import bcrypt
 import urllib.parse
 
 
+class Message(BaseModel):
+    from_api_key: str
+    to_api_key: str
+    message: str
+
+
 class User(BaseModel):
+    # messages = []
     username: str
     password: str
     display_name: str
@@ -18,11 +25,16 @@ salt = bcrypt.gensalt()
 
 app = FastAPI()
 
+# List of user objects
 users = []
 
+# Username -> Hashed Password
 creds = {}
 
+# API key -> User
 api_keys = {}
+
+inboxes = {}
 
 
 @app.get("/")
@@ -49,9 +61,16 @@ def create_user(user: User):
     users.append(user)
     creds[user.username] = (bcrypt.hashpw(user.password.encode(), salt), api_key)
     api_keys[api_key] = user
+    inboxes[api_key] = []
     print(api_keys[api_key])
 
     return {"API_KEY": api_key}
+
+
+@app.post("/send-message")
+def send_message(message: Message):
+    inboxes[message.to_api_key].append(message)
+    return {"Success": "Message Sent"}
 
 
 @app.get("/login/{api_key}")
@@ -60,6 +79,14 @@ def login(api_key):
         return {"Welcome back": api_keys.get(api_key).username}
 
     return "Please sign up"
+
+
+@app.get("/inbox/{api_key}")
+def get_inbox(api_key):
+    if api_key not in inboxes:
+        return {"Error": "No account"}
+
+    return inboxes[api_key]
 
 
 def generate_api_key():
