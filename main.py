@@ -8,33 +8,32 @@ import bcrypt
 import urllib.parse
 
 
+class Credentials(BaseModel):
+    username: str
+    hashed_password: str
+
+
 class Message(BaseModel):
-    from_api_key: str
-    to_api_key: str
+    from_username: str
+    to_username: str
     message: str
 
 
 class User(BaseModel):
-    # messages = []
     username: str
     password: str
     display_name: str
+    api_key: Optional[str] = None
+    messages: Optional[list] = []
 
 
 salt = bcrypt.gensalt()
 
 app = FastAPI()
 
-# List of user objects
 users = []
-
-# Username -> Hashed Password
-creds = {}
-
-# API key -> User
-api_keys = {}
-
-inboxes = {}
+stored_creds = {}
+api_key_to_user = {}
 
 
 @app.get("/")
@@ -44,8 +43,8 @@ def home():
 
 @app.get("/user/{apikey}")
 def getUser(apikey: int):
-    for key in api_keys:
-        if key == apikey:
+    for user in users:
+        if user.api_key == apikey:
             return {"Data": "You have an account"}
     return {"Data": "You don't have an account"}
 
@@ -56,37 +55,46 @@ def create_user(user: User):
         if u.username == user.username:
             return {"Error": "Username Taken"}
 
-    api_key = generate_api_key()
-
+    user.api_key = generate_api_key()
+    stored_creds[user.username] = user.password
+    api_key_to_user[user.api_key] = user
     users.append(user)
-    creds[user.username] = (bcrypt.hashpw(user.password.encode(), salt), api_key)
-    api_keys[api_key] = user
-    inboxes[api_key] = []
-    print(api_keys[api_key])
-
-    return {"API_KEY": api_key}
+    return {"API_KEY": user.api_key}
 
 
 @app.post("/send-message")
 def send_message(message: Message):
-    inboxes[message.to_api_key].append(message)
-    return {"Success": "Message Sent"}
+    sent = False
+    for user in users:
+        if user.username == message.to_username:
+            user.messages.append(message)
+            sent = True
+            break
+    if sent:
+        return {"Success": "Message Sent!"}
+    else:
+        return {"Error": "User Does Not Exist!"}
 
 
-@app.get("/login/{api_key}")
-def login(api_key):
-    if api_key in api_keys.keys():
-        return {"Welcome back": api_keys.get(api_key).username}
+@app.post("/login")
+def login(creds: Credentials):
+    if stored_creds[creds.username] == creds.hashed_password:
+        for user in users:
+            if user.username == creds.username:
+                api_key = generate_api_key()
+                user.api_key = api_key
+        return {"API_KEY": api_key}
 
-    return "Please sign up"
+    else:
+        return {"Error": "Username or Password is Incorrect"}
 
 
 @app.get("/inbox/{api_key}")
 def get_inbox(api_key):
-    if api_key not in inboxes:
-        return {"Error": "No account"}
-
-    return inboxes[api_key]
+    if api_key in api_key_to_user:
+        return api_key_to_user[api_key].messages
+    else:
+        return {"Error": "User Doesn't Exist!"}
 
 
 def generate_api_key():
