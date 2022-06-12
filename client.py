@@ -10,7 +10,7 @@ import os.path
 # if they don't make them call the api and store their api key.
 
 
-our_server = "http://127.0.0.1:8000"
+our_server = "https://psychic-force-349901.nw.r.appspot.com/"
 
 
 class User:
