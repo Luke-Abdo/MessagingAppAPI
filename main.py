@@ -1,11 +1,10 @@
 import hashlib
+import json
 import os
-
 from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import Optional
 import bcrypt
-import urllib.parse
 
 
 class Credentials(BaseModel):
@@ -14,7 +13,8 @@ class Credentials(BaseModel):
 
 
 class Message(BaseModel):
-    from_username: str
+    api_key: str
+    from_display_name: str
     to_username: str
     message: str
 
@@ -34,11 +34,12 @@ app = FastAPI()
 users = []
 stored_creds = {}
 api_key_to_user = {}
+username_to_user = {}
 
 
 @app.get("/")
 def home():
-    return {"data": "Working"}
+    return username_to_user
 
 
 @app.get("/user/{apikey}")
@@ -58,6 +59,7 @@ def create_user(user: User):
     user.api_key = generate_api_key()
     stored_creds[user.username] = user.password
     api_key_to_user[user.api_key] = user
+    username_to_user[user.username] = user
     users.append(user)
     return {"API_KEY": user.api_key}
 
@@ -65,11 +67,11 @@ def create_user(user: User):
 @app.post("/send-message")
 def send_message(message: Message):
     sent = False
-    for user in users:
-        if user.username == message.to_username:
-            user.messages.append(message)
-            sent = True
-            break
+    if not check_api_key(message.api_key):
+        return {"Error": "Api key isn't valid"}
+    if message.to_username in username_to_user.keys():
+        username_to_user[message.to_username].messages.append(message)
+        sent = True
     if sent:
         return {"Success": "Message Sent!"}
     else:
@@ -99,3 +101,9 @@ def get_inbox(api_key):
 
 def generate_api_key():
     return hashlib.sha256(os.urandom(32)).hexdigest()
+
+
+def check_api_key(api_key):
+    if api_key in api_key_to_user.keys():
+        return True
+    return False

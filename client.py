@@ -10,15 +10,28 @@ import os.path
 # if they don't make them call the api and store their api key.
 
 
-our_server = "http://127.0.0.1:50000"
+our_server = "http://127.0.0.1:8000"
 
 
-class User():
+class User:
     username: str
     password: str
     display_name: str
     api_key: str
     messages: str
+
+
+class Message:
+    api_key: str
+    to_username: str
+    from_display_name: str
+    message: str
+
+    def __init__(self, api_key, to_username, from_display_name, message):
+        self.api_key = api_key
+        self.to_username = to_username
+        self.from_display_name = from_display_name
+        self.message = message
 
 
 def main():
@@ -27,6 +40,13 @@ def main():
 
     with open("api_key", "r") as f:
         api_key = f.read()
+
+
+    message = Message(api_key, "Luke","Dick", "Message")
+    print(message.to_username)
+    print(send_message(message))
+
+    print(get_inbox(api_key).json())
 
 
 def sign_up():
@@ -58,14 +78,15 @@ def get_inbox(api_key):
     return r.get(f"{our_server}/inbox/{api_key}")
 
 
-def send_message(from_api_key, to_api_key, message):
+def send_message(message: Message):
     data = {
-        'from_username': from_api_key,
-        'to_username': to_api_key,
-        'message': message
+        'api_key': message.api_key,
+        'from_display_name': message.from_display_name,
+        'to_username': message.to_username,
+        'message': message.message
     }
 
-    r.post(f"{our_server}/send-message", json=data)
+    return r.post(f"{our_server}/send-message", json=data).text
 
 
 def print_messages(message_list):
