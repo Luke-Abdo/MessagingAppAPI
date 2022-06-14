@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import Optional
 import bcrypt
+import mysql.connector
 
 
 class Credentials(BaseModel):
@@ -30,6 +31,11 @@ class User(BaseModel):
 salt = bcrypt.gensalt()
 
 app = FastAPI()
+mydb = mysql.connector.connect(
+  host="34.79.189.28",
+  user="admin",
+  password="3(6L<C\\1-0GK=KG%"
+)
 
 users = []
 stored_creds = {}

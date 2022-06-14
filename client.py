@@ -40,13 +40,9 @@ def main():
 
     with open("api_key", "r") as f:
         api_key = f.read()
-
-
-    message = Message(api_key, "Luke","Dick", "Message")
-    print(message.to_username)
+    message = Message(api_key, "Luke", "John", "Helloooo")
     print(send_message(message))
-
-    print(get_inbox(api_key).json())
+    print_messages(get_inbox(api_key))
 
 
 def sign_up():
@@ -56,7 +52,7 @@ def sign_up():
 
     data = {
         'username': name,
-        'password': password,
+        'password': hash(password),
         'display_name': display_name
     }
 
@@ -75,7 +71,7 @@ def sign_up():
 
 
 def get_inbox(api_key):
-    return r.get(f"{our_server}/inbox/{api_key}")
+    return r.get(f"{our_server}/inbox/{api_key}").json()
 
 
 def send_message(message: Message):
@@ -91,8 +87,7 @@ def send_message(message: Message):
 
 def print_messages(message_list):
     for message in message_list:
-        print(f"From {message['from_username']} ")
-        print(message['message'])
+        print(f"From {message} ")
 
 
 if __name__ == '__main__':
