@@ -32,9 +32,10 @@ salt = bcrypt.gensalt()
 
 app = FastAPI()
 mydb = mysql.connector.connect(
-  host="34.79.189.28",
-  user="admin",
-  password="3(6L<C\\1-0GK=KG%"
+    host ="34.79.189.28",
+    user ="admin",
+    passwd ="3(6L<C\\1-0GK=KG%",
+    database= "app"
 )
 
 users = []
@@ -42,10 +43,17 @@ stored_creds = {}
 api_key_to_user = {}
 username_to_user = {}
 
+cursor = mydb.cursor()
+
+query = "SELECT * FROM users"
+
+cursor.execute(query)
+
+myresult = cursor.fetchall()
 
 @app.get("/")
 def home():
-    return username_to_user
+    return myresult
 
 
 @app.get("/user/{apikey}")
