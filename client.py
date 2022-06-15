@@ -5,10 +5,6 @@ import requests as r
 import urllib.parse
 import os.path
 
-# Check if they have api key
-# if they do, contact the api and just say welcome back {name}
-# if they don't make them call the api and store their api key.
-
 
 our_server = "https://psychic-force-349901.nw.r.appspot.com/"
 

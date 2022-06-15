@@ -56,12 +56,7 @@ def create_user(user: User):
     for u in users:
         if u.username == user.username:
             return {"Error": "Username Taken"}
-
-    user.api_key = generate_api_key()
-    stored_creds[user.username] = user.password
-    api_key_to_user[user.api_key] = user
-    username_to_user[user.username] = user
-    users.append(user)
+    add_user_to_db(user)
     return {"API_KEY": user.api_key}
 
 
@@ -110,7 +105,7 @@ def check_api_key(api_key):
     return False
 
 
-def get_database():
+def make_connection_to_db():
     connection = pymysql.connect(
         host="34.79.189.28",
         user="admin",
@@ -118,7 +113,21 @@ def get_database():
         database="app",
         cursorclass=pymysql.cursors.DictCursor
     )
+    return connection
+
+
+def get_database():
+    connection = make_connection_to_db()
     cursor = connection.cursor()
     query = "SELECT * FROM users"
     cursor.execute(query)
     return cursor.fetchall()
+
+
+def add_user_to_db(user: User):
+    sql = "INSERT INTO `users` (`username`, `password`, `displayname`, `api_key`) VALUES (%s, %s, %s, %s)"
+    connection = make_connection_to_db()
+    cursor = connection.cursor()
+    cursor.execute(sql, (user.username, user.password, user.display_name, user.api_key))
+    connection.commit()
+
