@@ -1,5 +1,7 @@
 fastapi==0.78.0
-mysql_connector_repackaged==0.3.1
+mysql-connector-python==8.0.29
+mysql==0.0.3
+mysqlclient==2.1.0
 pydantic==1.9.1
 python_bcrypt==0.3.2
 requests==2.28.0
