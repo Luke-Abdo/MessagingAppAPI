@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import Optional
 import bcrypt
-import mysql.connector
+import pymysql.cursors
 
 
 class Credentials(BaseModel):
@@ -31,29 +31,16 @@ class User(BaseModel):
 salt = bcrypt.gensalt()
 
 app = FastAPI()
-mydb = mysql.connector.connect(
-    host ="34.79.189.28",
-    user ="admin",
-    passwd ="3(6L<C\\1-0GK=KG%",
-    database= "app"
-)
 
 users = []
 stored_creds = {}
 api_key_to_user = {}
 username_to_user = {}
 
-cursor = mydb.cursor()
-
-query = "SELECT * FROM users"
-
-cursor.execute(query)
-
-myresult = cursor.fetchall()
 
 @app.get("/")
 def home():
-    return myresult
+    return get_database()
 
 
 @app.get("/user/{apikey}")
@@ -121,3 +108,17 @@ def check_api_key(api_key):
     if api_key in api_key_to_user.keys():
         return True
     return False
+
+
+def get_database():
+    connection = pymysql.connect(
+        host="34.79.189.28",
+        user="admin",
+        passwd="3(6L<C\\1-0GK=KG%",
+        database="app",
+        cursorclass=pymysql.cursors.DictCursor
+    )
+    cursor = connection.cursor()
+    query = "SELECT * FROM users"
+    cursor.execute(query)
+    return cursor.fetchall()
