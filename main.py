@@ -56,6 +56,7 @@ def create_user(user: User):
     for u in users:
         if u.username == user.username:
             return {"Error": "Username Taken"}
+
     add_user_to_db(user)
     return {"API_KEY": user.api_key}
 
